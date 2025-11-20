@@ -5,6 +5,7 @@ const countEl = document.getElementById('count');
 let chickCount = 0;
 let lastCount = -1;
 let needsSort = true;
+const MAX_CHICKS = 300;
 
 let width, height;
 function resize() {
@@ -14,77 +15,7 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-// === 音频管理器 (参考黄金矿工) ===
-class AudioManager {
-    constructor() {
-        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        this.enabled = true;
-    }
-
-    // 尝试唤醒音频上下文 (必须在用户交互事件中调用)
-    resume() {
-        if (this.ctx.state === 'suspended') {
-            this.ctx.resume().then(() => {
-                console.log("AudioContext Resumed");
-            });
-        }
-    }
-
-    // 基础发声
-    playTone(freq, type, duration, vol = 0.1) {
-        if (!this.enabled) return;
-        
-        // 尝试自动恢复 (虽然最好是在点击事件里显式调用 resume)
-        if (this.ctx.state === 'suspended') {
-            this.ctx.resume();
-        }
-
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-
-        osc.type = type; 
-        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-        
-        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
-
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-
-        osc.start();
-        osc.stop(this.ctx.currentTime + duration);
-    }
-
-    // 游戏特定音效
-    playLay() { // 生蛋: 咯咯
-        // 400Hz triangle wave
-        this.playTone(400, 'triangle', 0.2, 0.2);
-    }
-
-    playHatch() { // 孵化: 哔哔
-        // 800Hz sine wave
-        this.playTone(800, 'sine', 0.1, 0.1);
-    }
-
-    playChirp() { // 小鸡叫: 叽叽
-        // 随机高频
-        const freq = 1200 + Math.random() * 400;
-        this.playTone(freq, 'triangle', 0.05, 0.05);
-    }
-}
-
-const audioManager = new AudioManager();
-
-// 尝试自动唤醒音频 (Android TV 上因为设置了 MediaPlaybackRequiresUserGesture(false) 所以这行会生效)
-audioManager.resume();
-
-// 全局交互兜底唤醒
-window.addEventListener('click', () => audioManager.resume());
-window.addEventListener('keydown', () => audioManager.resume());
-window.addEventListener('gamepadconnected', () => audioManager.resume()); // 手柄连接也是一种交互
-
-
-// === 静态图片资源 ===
+// === 静态资源 ===
 const IMAGE_PATHS = {
     motherFrames: [
         'images/mother_0.png',
@@ -103,6 +34,14 @@ const imageAssets = {
     chickFrames: []
 };
 let assetsReady = false;
+
+const SOUND_PATHS = {
+    lay: 'audio/lay.wav',
+    hatch: 'audio/hatch.wav',
+    chirp: 'audio/chirp.wav'
+};
+
+const soundAssets = {};
 
 function loadImages(paths) {
     const tasks = [];
@@ -133,6 +72,27 @@ function loadImages(paths) {
         }
     });
     return Promise.all(tasks);
+}
+
+function loadSounds(paths) {
+    const tasks = Object.entries(paths).map(([key, src]) => new Promise((resolve, reject) => {
+        const audio = new Audio();
+        audio.preload = 'auto';
+        audio.oncanplaythrough = () => {
+            soundAssets[key] = audio;
+            resolve();
+        };
+        audio.onerror = reject;
+        audio.src = src;
+    }));
+    return Promise.all(tasks);
+}
+
+function playSound(name) {
+    const audio = soundAssets[name];
+    if (!audio) return;
+    const clone = audio.cloneNode();
+    clone.play().catch(() => {});
 }
 
 // === 游戏实体类 ===
@@ -247,7 +207,7 @@ class Player extends Entity {
         const offset = this.facingRight ? -20 : 20;
         entities.push(new Egg(this.x + offset, this.y));
         needsSort = true;
-        audioManager.playLay();
+        playSound('lay');
     }
 
     draw(ctx) {
@@ -289,7 +249,10 @@ class Egg extends Entity {
             entities.push(newChick);
             chickCount++;
             needsSort = true;
-            audioManager.playHatch();
+            if (chickCount > MAX_CHICKS) {
+                markRandomChickForRemoval(newChick);
+            }
+            playSound('hatch');
         }
     }
 
@@ -327,7 +290,7 @@ class Chick extends Entity {
             this.dy = Math.sin(angle) * speed;
             this.facingRight = this.dx > 0;
             
-            if (Math.random() < 0.05) audioManager.playChirp();
+            if (Math.random() < 0.05) playSound('chirp');
         }
 
         // 偶尔停下来
@@ -411,7 +374,6 @@ needsSort = true;
 
 // 输入处理
 window.addEventListener('keydown', e => {
-    audioManager.resume();
     switch(e.code) {
         case 'ArrowUp': case 'KeyW': player.keys.u = true; break;
         case 'ArrowDown': case 'KeyS': player.keys.d = true; break;
@@ -447,6 +409,20 @@ function cleanupEntities() {
             needsSort = true;
         }
     }
+}
+
+function markRandomChickForRemoval(exclude) {
+    const candidates = [];
+    for (let i = 0; i < entities.length; i++) {
+        const entity = entities[i];
+        if (entity instanceof Chick && !entity.markedForDeletion && entity !== exclude) {
+            candidates.push(entity);
+        }
+    }
+    if (!candidates.length) return;
+    const victim = candidates[Math.floor(Math.random() * candidates.length)];
+    victim.markedForDeletion = true;
+    needsSort = true;
 }
 
 function loop() {
@@ -491,12 +467,15 @@ function loop() {
     requestAnimationFrame(loop);
 }
 
-loadImages(IMAGE_PATHS)
+Promise.all([
+    loadImages(IMAGE_PATHS),
+    loadSounds(SOUND_PATHS)
+])
     .then(() => {
         assetsReady = true;
         loop();
     })
     .catch((err) => {
-        console.error('Failed to load images', err);
+        console.error('Failed to load assets', err);
         loop(); // fallback
     });
