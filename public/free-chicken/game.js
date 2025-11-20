@@ -70,19 +70,8 @@ class AudioManager {
 
 const audioManager = new AudioManager();
 
-// UI Elements for audio unlocking
-const startBtn = document.getElementById('start-btn');
-const startOverlay = document.getElementById('start-overlay');
-
-if (startBtn) {
-    startBtn.addEventListener('click', () => {
-        startOverlay.style.display = 'none';
-        // 显式唤醒
-        audioManager.resume();
-        // 测试声音
-        audioManager.playLay();
-    });
-}
+// 尝试自动唤醒音频 (Android TV 上因为设置了 MediaPlaybackRequiresUserGesture(false) 所以这行会生效)
+audioManager.resume();
 
 // 全局交互兜底唤醒
 window.addEventListener('click', () => audioManager.resume());
@@ -405,7 +394,12 @@ window.addEventListener('keydown', e => {
         case 'ArrowDown': case 'KeyS': player.keys.d = true; break;
         case 'ArrowLeft': case 'KeyA': player.keys.l = true; break;
         case 'ArrowRight': case 'KeyD': player.keys.r = true; break;
-        case 'Space': case 'Enter': player.layEgg(); break; // Enter 适配遥控器确认键
+        case 'Space': 
+        case 'Enter': 
+        case 'NumpadEnter':
+        case 'Digit0': // 部分手柄映射
+            player.layEgg(); 
+            break;
     }
 });
 

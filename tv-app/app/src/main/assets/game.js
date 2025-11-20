@@ -70,23 +70,13 @@ class AudioManager {
 
 const audioManager = new AudioManager();
 
-// UI Elements for audio unlocking
-const startBtn = document.getElementById('start-btn');
-const startOverlay = document.getElementById('start-overlay');
-
-if (startBtn) {
-    startBtn.addEventListener('click', () => {
-        startOverlay.style.display = 'none';
-        // 显式唤醒
-        audioManager.resume();
-        // 测试声音
-        audioManager.playLay();
-    });
-}
+// 尝试自动唤醒音频 (Android TV 上因为设置了 MediaPlaybackRequiresUserGesture(false) 所以这行会生效)
+audioManager.resume();
 
 // 全局交互兜底唤醒
 window.addEventListener('click', () => audioManager.resume());
 window.addEventListener('keydown', () => audioManager.resume());
+window.addEventListener('gamepadconnected', () => audioManager.resume()); // 手柄连接也是一种交互
 
 
 // === 游戏实体类 ===
@@ -119,18 +109,63 @@ class Player extends Entity {
         this.walkFrame = 0;
         this.isWalking = false;
         this.keys = { u: false, d: false, l: false, r: false };
+        this.gamepadIndex = -1;
+        this.lastButtonState = false; // 防止按住A键无限生蛋
+    }
+
+    pollGamepad() {
+        const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+        // 寻找第一个连接的手柄
+        for (let i = 0; i < gamepads.length; i++) {
+            if (gamepads[i]) {
+                this.gamepadIndex = i;
+                break;
+            }
+        }
     }
 
     update() {
+        this.pollGamepad();
+
         let dx = 0;
         let dy = 0;
+
+        // 1. 键盘输入
         if (this.keys.u) dy -= this.speed;
         if (this.keys.d) dy += this.speed;
         if (this.keys.l) dx -= this.speed;
         if (this.keys.r) dx += this.speed;
 
-        // 归一化斜向速度
-        if (dx !== 0 && dy !== 0) {
+        // 2. 手柄输入 (叠加/覆盖)
+        if (this.gamepadIndex !== -1) {
+            const gp = navigator.getGamepads()[this.gamepadIndex];
+            if (gp) {
+                // 左摇杆 (Axes 0, 1)
+                // 只有超过死区才响应
+                if (Math.abs(gp.axes[0]) > 0.2) dx = gp.axes[0] * this.speed;
+                if (Math.abs(gp.axes[1]) > 0.2) dy = gp.axes[1] * this.speed;
+
+                // 十字键 (D-Pad, Buttons 12-15)
+                if (gp.buttons[12] && gp.buttons[12].pressed) dy -= this.speed;
+                if (gp.buttons[13] && gp.buttons[13].pressed) dy += this.speed;
+                if (gp.buttons[14] && gp.buttons[14].pressed) dx -= this.speed;
+                if (gp.buttons[15] && gp.buttons[15].pressed) dx += this.speed;
+
+                // A键 (Button 0) 生蛋
+                if (gp.buttons[0] && gp.buttons[0].pressed) {
+                    if (!this.lastButtonState) {
+                        this.layEgg();
+                        this.lastButtonState = true;
+                    }
+                } else {
+                    this.lastButtonState = false;
+                }
+            }
+        }
+
+        // 归一化斜向速度 (仅当不是模拟摇杆输入时，避免速度过快)
+        // 简单的判断：如果 dx/dy 是整倍数 speed，说明是数字输入（键盘/Dpad），需要归一化
+        if (Math.abs(dx) === this.speed && Math.abs(dy) === this.speed) {
             dx *= 0.707;
             dy *= 0.707;
         }
@@ -142,7 +177,7 @@ class Player extends Entity {
         this.x = Math.max(20, Math.min(width - 20, this.x));
         this.y = Math.max(20, Math.min(height - 20, this.y));
 
-        this.isWalking = (dx !== 0 || dy !== 0);
+        this.isWalking = (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1);
         if (this.isWalking) {
             this.walkFrame += 0.2;
             if (dx !== 0) this.facingRight = dx > 0;
@@ -359,7 +394,12 @@ window.addEventListener('keydown', e => {
         case 'ArrowDown': case 'KeyS': player.keys.d = true; break;
         case 'ArrowLeft': case 'KeyA': player.keys.l = true; break;
         case 'ArrowRight': case 'KeyD': player.keys.r = true; break;
-        case 'Space': case 'Enter': player.layEgg(); break; // Enter 适配遥控器确认键
+        case 'Space': 
+        case 'Enter': 
+        case 'NumpadEnter':
+        case 'Digit0': // 部分手柄映射
+            player.layEgg(); 
+            break;
     }
 });
 
