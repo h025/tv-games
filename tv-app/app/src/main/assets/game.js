@@ -86,25 +86,53 @@ window.addEventListener('gamepadconnected', () => audioManager.resume()); // 手
 
 // === 静态图片资源 ===
 const IMAGE_PATHS = {
-    mother: 'images/mother.png',
-    chick: 'images/chick.png',
+    motherFrames: [
+        'images/mother_0.png',
+        'images/mother_1.png',
+        'images/mother_2.png'
+    ],
+    chickFrames: [
+        'images/chick_0.png',
+        'images/chick_1.png'
+    ],
     background: 'images/background.png'
 };
 
-const imageAssets = {};
+const imageAssets = {
+    motherFrames: [],
+    chickFrames: []
+};
 let assetsReady = false;
 
 function loadImages(paths) {
-    const entries = Object.entries(paths);
-    return Promise.all(entries.map(([key, src]) => new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => {
-            imageAssets[key] = img;
-            resolve();
-        };
-        img.onerror = reject;
-        img.src = src;
-    })));
+    const tasks = [];
+    Object.entries(paths).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+            imageAssets[key] = [];
+            value.forEach((src, index) => {
+                tasks.push(new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        imageAssets[key][index] = img;
+                        resolve();
+                    };
+                    img.onerror = reject;
+                    img.src = src;
+                }));
+            });
+        } else {
+            tasks.push(new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    imageAssets[key] = img;
+                    resolve();
+                };
+                img.onerror = reject;
+                img.src = value;
+            }));
+        }
+    });
+    return Promise.all(tasks);
 }
 
 // === 游戏实体类 ===
@@ -227,7 +255,8 @@ class Player extends Entity {
         ctx.translate(this.x, this.y);
         if (!this.facingRight) ctx.scale(-1, 1);
 
-        const sprite = imageAssets.mother;
+        const frames = imageAssets.motherFrames || [];
+        const sprite = frames.length ? frames[Math.floor((Date.now() / 150) % frames.length)] : null;
         if (sprite) {
             const bounce = this.isWalking ? Math.sin(this.walkFrame) * 3 : 0;
             ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2 + bounce);
@@ -323,7 +352,8 @@ class Chick extends Entity {
         // 跳跃效果
         const bounce = (this.dx !== 0 || this.dy !== 0) ? Math.abs(Math.sin(Date.now() / 50)) * 5 : 0;
         ctx.translate(0, -bounce);
-        const sprite = imageAssets.chick;
+        const frames = imageAssets.chickFrames || [];
+        const sprite = frames.length ? frames[Math.floor((Date.now() / 200) % frames.length)] : null;
         if (sprite) {
             ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
         } else {

@@ -2,18 +2,22 @@ const fs = require('fs');
 const path = require('path');
 const { createCanvas } = require('canvas');
 
-function drawMother(ctx, w, h) {
+function drawMother(ctx, w, h, phase = 0) {
   ctx.translate(w / 2, h / 2 + 5);
   ctx.fillStyle = '#FFF';
   ctx.beginPath();
   ctx.ellipse(0, 0, 25, 30, 0, 0, Math.PI * 2);
   ctx.fill();
 
+  const wingAngle = phase === 0 ? 0 : (phase === 1 ? -Math.PI / 8 : Math.PI / 8);
+  ctx.save();
+  ctx.rotate(wingAngle);
   ctx.fillStyle = '#EEE';
   ctx.beginPath();
   ctx.ellipse(-10, 5, 12, 8, -0.5, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
+  ctx.restore();
 
   ctx.fillStyle = '#F00';
   ctx.beginPath();
@@ -33,7 +37,7 @@ function drawMother(ctx, w, h) {
   ctx.fill();
 }
 
-function drawChick(ctx, w, h) {
+function drawChick(ctx, w, h, phase = 0) {
   ctx.translate(w / 2, h / 2 + 2);
   ctx.fillStyle = '#FFD700';
   ctx.beginPath();
@@ -42,14 +46,14 @@ function drawChick(ctx, w, h) {
 
   ctx.fillStyle = '#F57F17';
   ctx.beginPath();
-  ctx.moveTo(6, -2);
-  ctx.lineTo(12, 0);
-  ctx.lineTo(6, 2);
+  ctx.moveTo(6, -2 + phase);
+  ctx.lineTo(12, phase);
+  ctx.lineTo(6, 2 + phase);
   ctx.fill();
 
   ctx.fillStyle = '#000';
   ctx.beginPath();
-  ctx.arc(3, -3, 2, 0, Math.PI * 2);
+  ctx.arc(3, -3 + phase * 0.2, 2, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -89,18 +93,28 @@ function main() {
   ];
   outDirs.forEach(ensureDir);
 
-  const motherCanvas = createCanvas(80, 80);
-  drawMother(motherCanvas.getContext('2d'), 80, 80);
+  const motherFrames = [0, 1, 2].map((phase) => {
+    const canvas = createCanvas(80, 80);
+    drawMother(canvas.getContext('2d'), 80, 80, phase);
+    return canvas;
+  });
 
-  const chickCanvas = createCanvas(40, 40);
-  drawChick(chickCanvas.getContext('2d'), 40, 40);
+  const chickFrames = [0, 1].map((phase) => {
+    const canvas = createCanvas(40, 40);
+    drawChick(canvas.getContext('2d'), 40, 40, phase === 0 ? 0 : 2);
+    return canvas;
+  });
 
   const bgCanvas = createCanvas(1024, 576);
   drawBackground(bgCanvas.getContext('2d'), 1024, 576);
 
   outDirs.forEach((dir) => {
-    savePNG(motherCanvas, path.join(dir, 'mother.png'));
-    savePNG(chickCanvas, path.join(dir, 'chick.png'));
+    motherFrames.forEach((canvas, idx) => {
+      savePNG(canvas, path.join(dir, `mother_${idx}.png`));
+    });
+    chickFrames.forEach((canvas, idx) => {
+      savePNG(canvas, path.join(dir, `chick_${idx}.png`));
+    });
     savePNG(bgCanvas, path.join(dir, 'background.png'));
   });
 
