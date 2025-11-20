@@ -84,6 +84,29 @@ window.addEventListener('keydown', () => audioManager.resume());
 window.addEventListener('gamepadconnected', () => audioManager.resume()); // 手柄连接也是一种交互
 
 
+// === 静态图片资源 ===
+const IMAGE_PATHS = {
+    mother: 'images/mother.png',
+    chick: 'images/chick.png',
+    background: 'images/background.png'
+};
+
+const imageAssets = {};
+let assetsReady = false;
+
+function loadImages(paths) {
+    const entries = Object.entries(paths);
+    return Promise.all(entries.map(([key, src]) => new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            imageAssets[key] = img;
+            resolve();
+        };
+        img.onerror = reject;
+        img.src = src;
+    })));
+}
+
 // === 游戏实体类 ===
 
 class Entity {
@@ -204,48 +227,17 @@ class Player extends Entity {
         ctx.translate(this.x, this.y);
         if (!this.facingRight) ctx.scale(-1, 1);
 
-        // 简单的俯视鸡
-        // 身体
-        const bounce = this.isWalking ? Math.sin(this.walkFrame) * 3 : 0;
-        
-        ctx.translate(0, -25 + bounce); // 身体中心上移
-
-        ctx.fillStyle = '#FFF';
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 25, 30, 0, 0, Math.PI*2);
-        ctx.fill();
-        
-        // 翅膀
-        const wingAngle = this.isWalking ? Math.sin(this.walkFrame * 2) * 0.5 : 0;
-        ctx.save();
-        ctx.rotate(wingAngle);
-        ctx.fillStyle = '#EEE';
-        ctx.beginPath();
-        ctx.ellipse(-10, 5, 12, 8, -0.5, 0, Math.PI*2);
-        ctx.fill();
-        ctx.stroke();
-        ctx.restore();
-
-        // 冠
-        ctx.fillStyle = '#F00';
-        ctx.beginPath();
-        ctx.arc(0, -25, 8, 0, Math.PI*2);
-        ctx.fill();
-
-        // 嘴
-        ctx.fillStyle = '#FFA000';
-        ctx.beginPath();
-        ctx.moveTo(15, -10);
-        ctx.lineTo(25, -5);
-        ctx.lineTo(15, 0);
-        ctx.fill();
-
-        // 眼睛
-        ctx.fillStyle = '#000';
-        ctx.beginPath();
-        ctx.arc(10, -15, 3, 0, Math.PI*2);
-        ctx.fill();
-
+        const sprite = imageAssets.mother;
+        if (sprite) {
+            const bounce = this.isWalking ? Math.sin(this.walkFrame) * 3 : 0;
+            ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2 + bounce);
+        } else {
+            // 备用绘制（当图片尚未加载时）
+            ctx.fillStyle = '#FFF';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 25, 30, 0, 0, Math.PI*2);
+            ctx.fill();
+        }
         ctx.restore();
     }
 }
@@ -333,26 +325,16 @@ class Chick extends Entity {
 
         // 跳跃效果
         const bounce = (this.dx !== 0 || this.dy !== 0) ? Math.abs(Math.sin(Date.now() / 50)) * 5 : 0;
-        ctx.translate(0, -10 - bounce);
-
-        ctx.fillStyle = '#FFD700';
-        ctx.beginPath();
-        ctx.arc(0, 0, 8, 0, Math.PI*2);
-        ctx.fill();
-
-        // 嘴
-        ctx.fillStyle = '#F57F17';
-        ctx.beginPath();
-        ctx.moveTo(5, -2);
-        ctx.lineTo(10, 0);
-        ctx.lineTo(5, 2);
-        ctx.fill();
-
-        // 眼
-        ctx.fillStyle = '#000';
-        ctx.beginPath();
-        ctx.arc(3, -3, 1.5, 0, Math.PI*2);
-        ctx.fill();
+        ctx.translate(0, -bounce);
+        const sprite = imageAssets.chick;
+        if (sprite) {
+            ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
+        } else {
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(0, 0, 8, 0, Math.PI*2);
+            ctx.fill();
+        }
 
         ctx.restore();
     }
@@ -456,9 +438,19 @@ function markRandomChickForRemoval(exclude) {
 }
 
 function loop() {
+    if (!assetsReady) {
+        requestAnimationFrame(loop);
+        return;
+    }
+
     // 背景
-    ctx.fillStyle = '#81C784';
-    ctx.fillRect(0, 0, width, height);
+    const bg = imageAssets.background;
+    if (bg) {
+        ctx.drawImage(bg, 0, 0, width, height);
+    } else {
+        ctx.fillStyle = '#81C784';
+        ctx.fillRect(0, 0, width, height);
+    }
 
     // 更新
     entities.forEach(e => e.update());
@@ -487,4 +479,12 @@ function loop() {
     requestAnimationFrame(loop);
 }
 
-loop();
+loadImages(IMAGE_PATHS)
+    .then(() => {
+        assetsReady = true;
+        loop();
+    })
+    .catch((err) => {
+        console.error('Failed to load images', err);
+        loop(); // fallback
+    });
