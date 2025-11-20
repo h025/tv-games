@@ -260,9 +260,6 @@ class Egg extends Entity {
             entities.push(newChick);
             chickCount++;
             needsSort = true;
-            if (chickCount > MAX_CHICKS) {
-                markRandomChickForRemoval(newChick);
-            }
             audioManager.playHatch();
         }
     }
@@ -377,7 +374,6 @@ let entities = [player];
 
 // 随机生成一些植物装饰（数量适当减少以提升 TV 性能）
 const PLANT_COUNT = 12;
-const MAX_CHICKS = 120;
 for(let i=0; i<PLANT_COUNT; i++) {
     entities.push(new Plant(Math.random() * width, Math.random() * height));
 }
@@ -421,20 +417,6 @@ function cleanupEntities() {
             needsSort = true;
         }
     }
-}
-
-function markRandomChickForRemoval(exclude) {
-    const candidates = [];
-    for (let i = 0; i < entities.length; i++) {
-        const entity = entities[i];
-        if (entity instanceof Chick && !entity.markedForDeletion && entity !== exclude) {
-            candidates.push(entity);
-        }
-    }
-    if (!candidates.length) return;
-    const victim = candidates[Math.floor(Math.random() * candidates.length)];
-    victim.markedForDeletion = true;
-    needsSort = true;
 }
 
 function loop() {
