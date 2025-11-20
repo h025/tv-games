@@ -1,5 +1,10 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+const countEl = document.getElementById('count');
+
+let chickCount = 0;
+let lastCount = -1;
+let needsSort = true;
 
 let width, height;
 function resize() {
@@ -190,6 +195,7 @@ class Player extends Entity {
         // 在屁股后面生蛋
         const offset = this.facingRight ? -20 : 20;
         entities.push(new Egg(this.x + offset, this.y));
+        needsSort = true;
         audioManager.playLay();
     }
 
@@ -259,6 +265,8 @@ class Egg extends Entity {
         if (this.timer <= 0) {
             this.markedForDeletion = true;
             entities.push(new Chick(this.x, this.y));
+            chickCount++;
+            needsSort = true;
             audioManager.playHatch();
         }
     }
@@ -297,7 +305,7 @@ class Chick extends Entity {
             this.dy = Math.sin(angle) * speed;
             this.facingRight = this.dx > 0;
             
-            if (Math.random() < 0.1) audioManager.playChirp();
+            if (Math.random() < 0.05) audioManager.playChirp();
         }
 
         // 偶尔停下来
@@ -381,10 +389,12 @@ class Plant extends Entity {
 const player = new Player();
 let entities = [player];
 
-// 随机生成一些植物装饰
-for(let i=0; i<20; i++) {
+// 随机生成一些植物装饰（数量适当减少以提升 TV 性能）
+const PLANT_COUNT = 12;
+for(let i=0; i<PLANT_COUNT; i++) {
     entities.push(new Plant(Math.random() * width, Math.random() * height));
 }
+needsSort = true;
 
 // 输入处理
 window.addEventListener('keydown', e => {
@@ -413,6 +423,19 @@ window.addEventListener('keyup', e => {
 });
 
 // 游戏循环
+function cleanupEntities() {
+    for (let i = entities.length - 1; i >= 0; i--) {
+        const entity = entities[i];
+        if (entity.markedForDeletion) {
+            if (entity instanceof Chick && chickCount > 0) {
+                chickCount--;
+            }
+            entities.splice(i, 1);
+            needsSort = true;
+        }
+    }
+}
+
 function loop() {
     // 背景
     ctx.fillStyle = '#81C784';
@@ -422,10 +445,13 @@ function loop() {
     entities.forEach(e => e.update());
     
     // 清理
-    entities = entities.filter(e => !e.markedForDeletion);
+    cleanupEntities();
     
-    // 排序: Y轴大的在下面 (遮挡关系)
-    entities.sort((a, b) => a.y - b.y);
+    // 排序: Y轴大的在下面 (仅当有新增/删除时)
+    if (needsSort) {
+        entities.sort((a, b) => a.y - b.y);
+        needsSort = false;
+    }
 
     // 绘制
     // 1. 先画所有阴影
@@ -433,8 +459,11 @@ function loop() {
     // 2. 再画实体
     entities.forEach(e => e.draw(ctx));
 
-    // 更新UI
-    document.getElementById('count').innerText = entities.filter(e => e instanceof Chick).length;
+    // 更新UI（仅当数量变化时修改 DOM）
+    if (chickCount !== lastCount && countEl) {
+        lastCount = chickCount;
+        countEl.textContent = chickCount;
+    }
 
     requestAnimationFrame(loop);
 }
