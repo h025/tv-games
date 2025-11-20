@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>黄金矿工 (Gold Miner)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas" width="800" height="600"></canvas>
+        
+        <!-- 游戏UI层 -->
+        <div id="ui-layer">
+            <div id="hud" class="hidden">
+                <div class="hud-item">金钱: <span id="score-display">0</span></div>
+                <div class="hud-item">目标: <span id="target-display">650</span></div>
+                <div class="hud-item">时间: <span id="time-display">60</span></div>
+                <div class="hud-item">关卡: <span id="level-display">1</span></div>
+                <div class="hud-item" id="tnt-container">炸药: <span id="tnt-display">0</span></div>
+            </div>
+
+            <!-- 主菜单 -->
+            <div id="main-menu" class="screen">
+                <h1>黄金矿工</h1>
+                <button id="start-btn" class="btn primary">开始游戏</button>
+                <button id="leaderboard-btn" class="btn">排行榜</button>
+                <div class="instructions">
+                    <p>↓ 或 空格键 发射钩爪</p>
+                    <p>↑ 键 使用炸药</p>
+                </div>
+            </div>
+
+            <!-- 关卡结算/过关 -->
+            <div id="level-screen" class="screen hidden">
+                <h2 id="level-title">第 1 关 完成</h2>
+                <p>本关目标: <span id="level-goal-score">0</span></p>
+                <p>当前金钱: <span id="level-current-score">0</span></p>
+                <p id="level-message"></p>
+                <button id="next-level-btn" class="btn primary">下一关</button>
+            </div>
+
+            <!-- 商店 (简化版) -->
+            <div id="shop-screen" class="screen hidden">
+                <h2>商店</h2>
+                <p>当前金钱: <span id="shop-money">0</span></p>
+                <div class="shop-items" id="shop-items-container">
+                    <!-- 商品动态生成 -->
+                </div>
+                <button id="shop-next-btn" class="btn primary">下一关</button>
+            </div>
+
+            <!-- 游戏结束/排行榜输入 -->
+            <div id="game-over-screen" class="screen hidden">
+                <h2>游戏结束</h2>
+                <p>最终金钱: <span id="final-score">0</span></p>
+                
+                <div id="new-record-form" class="hidden">
+                    <p class="highlight">恭喜！你进入了前十名！</p>
+                    <input type="text" id="player-name" placeholder="输入你的名字" maxlength="10">
+                    <button id="save-score-btn" class="btn primary">保存记录</button>
+                </div>
+                
+                <div id="leaderboard-display" class="hidden">
+                    <h3>排行榜</h3>
+                    <ul id="leaderboard-list"></ul>
+                </div>
+
+                <button id="restart-btn" class="btn">返回菜单</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 按顺序加载脚本，避免模块CORS问题 -->
+    <script src="js/constants.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/audio-manager.js"></script>
+    <script src="js/leaderboard.js"></script>
+    <script src="js/sprites.js"></script>
+    <script src="js/classes.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
+

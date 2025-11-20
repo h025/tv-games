@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自由小鸡 (Free Roam)</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #81C784; font-family: 'Segoe UI', sans-serif; }
+        canvas { display: block; cursor: none; /* 隐藏鼠标，沉浸式 */ }
+        .ui { 
+            position: absolute; 
+            top: 20px; 
+            left: 20px; 
+            color: white; 
+            font-size: 24px; 
+            font-weight: bold;
+            pointer-events: none; 
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3); 
+            background: rgba(0,0,0,0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+        }
+        .back-btn { 
+            position: absolute; 
+            top: 20px; 
+            right: 20px; 
+            background: white; 
+            padding: 10px 20px; 
+            text-decoration: none; 
+            border-radius: 20px; 
+            color: #333; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            font-weight: bold;
+            z-index: 100;
+        }
+        .back-btn:hover { transform: scale(1.05); }
+    </style>
+</head>
+<body>
+    <div class="ui">↑↓←→ 移动 | 空格 生蛋 | 🐤 <span id="count">0</span></div>
+    <div id="start-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;justify-content:center;align-items:center;z-index:999;">
+        <button id="start-btn" style="font-size:30px;padding:20px 40px;cursor:pointer;background:#4CAF50;color:white;border:none;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.3);">点击开始游戏 🎵</button>
+    </div>
+    <a href="/" class="back-btn">返回大厅</a>
+    <canvas id="canvas"></canvas>
+    <script src="game.js"></script>
+</body>
+</html>
+

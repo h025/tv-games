@@ -1,0 +1,121 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-family: 'Arial', sans-serif;
+    user-select: none;
+}
+
+#game-container {
+    position: relative;
+    width: 320px;
+    height: 480px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    overflow: hidden;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: #70c5ce; /* 天空蓝 */
+}
+
+#ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+#score {
+    position: absolute;
+    top: 10%;
+    width: 100%;
+    text-align: center;
+    font-size: 50px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    z-index: 10;
+}
+
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    pointer-events: auto;
+    color: white;
+}
+
+.screen.hidden {
+    display: none;
+}
+
+h1 {
+    font-size: 40px;
+    color: #f48024;
+    text-shadow: 2px 2px 0 #fff;
+    margin-bottom: 20px;
+}
+
+h2 {
+    font-size: 36px;
+    color: #f48024;
+    text-shadow: 2px 2px 0 #fff;
+    margin-bottom: 10px;
+}
+
+button {
+    background: #f48024;
+    border: 2px solid #fff;
+    color: white;
+    padding: 10px 30px;
+    font-size: 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: transform 0.1s;
+}
+
+button:hover {
+    transform: scale(1.1);
+}
+
+.back-link {
+    color: #fff;
+    margin-top: 15px;
+    text-decoration: none;
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+.back-link:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+#medal {
+    width: 60px;
+    height: 60px;
+    background: #ffd700;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    margin: 10px;
+    display: none; /* 只有高分才显示 */
+    box-shadow: 0 0 10px #ffeb3b;
+}
+

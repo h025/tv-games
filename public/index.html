@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏大厅 - Web Games Collection</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        header {
+            background-color: #282c34;
+            color: white;
+            padding: 20px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        h1 { margin: 0; }
+        .game-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            padding: 50px;
+            max-width: 1200px;
+        }
+        .game-card {
+            background: white;
+            border-radius: 15px;
+            width: 300px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+        }
+        .game-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .game-thumb {
+            height: 200px;
+            background-color: #ddd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 50px;
+        }
+        .game-info {
+            padding: 20px;
+        }
+        .game-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .game-desc {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        /* 游戏特定样式 */
+        .miner-bg { background: linear-gradient(135deg, #8B4513, #DAA520); }
+        .bird-bg { background: linear-gradient(135deg, #4EC0CA, #A1E6E3); }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🎮 网页小游戏大厅</h1>
+    </header>
+
+    <div class="game-container">
+        <!-- 黄金矿工 -->
+        <a href="/gold-miner/" class="game-card">
+            <div class="game-thumb miner-bg">
+                ⛏️
+            </div>
+            <div class="game-info">
+                <div class="game-title">黄金矿工</div>
+                <div class="game-desc">
+                    经典复刻！操作钩爪抓取地下的金矿和钻石。小心石头和炸药桶！<br>
+                    <strong>操作：</strong> ↓/空格 发射, ↑ 炸药
+                </div>
+            </div>
+        </a>
+
+        <!-- 快乐小鸡 (Flappy) -->
+        <a href="/happy-bird/" class="game-card">
+            <div class="game-thumb bird-bg">
+                🐤
+            </div>
+            <div class="game-info">
+                <div class="game-title">飞翔小鸟</div>
+                <div class="game-desc">
+                    控制小鸟飞行，躲避障碍物，挑战最高分！<br>
+                    <strong>操作：</strong> 点击/空格 跳跃
+                </div>
+            </div>
+        </a>
+
+        <!-- 快乐母鸡 (Mrs Chicken) -->
+        <a href="/mrs-chicken/" class="game-card">
+            <div class="game-thumb" style="background-color: #FFB6C1;">
+                🐔
+            </div>
+            <div class="game-info">
+                <div class="game-title">快乐母鸡</div>
+                <div class="game-desc">
+                    我是一只快乐的母鸡，生好多好多蛋！<br>
+                    <strong>操作：</strong> 点击/键盘 生蛋
+                </div>
+            </div>
+        </a>
+
+        <!-- 自由小鸡 (Free Chicken) -->
+        <a href="/free-chicken/" class="game-card">
+            <div class="game-thumb" style="background-color: #98FB98;">
+                🐓
+            </div>
+            <div class="game-info">
+                <div class="game-title">自由小鸡</div>
+                <div class="game-desc">
+                    俯视视角，在草地上自由漫步和探险。<br>
+                    <strong>操作：</strong> ↑↓←→ 移动, 空格生蛋
+                </div>
+            </div>
+        </a>
+    </div>
+</body>
+</html>
+
